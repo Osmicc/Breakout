@@ -1,28 +1,33 @@
 import acm.graphics.GRect;
 import acm.util.RandomGenerator;
-import acm.graphics.GLabel;
-import acm.program.GraphicsProgram;
+
 import java.awt.*;
 
 public class Powerup extends GRect {
 
+    // the parameters for the size of the powerup
 
-    public static final int WIDTH = 44;
-    public static final int HEIGHT = 20;
+    // makes it impossible to die
     public static boolean starPower = false;
-    public int value;
-    public int clock = 0;
+    // what powerup is active
+    public static int value;
+    // used to speed up the gameplay
+    public static int gameLoopSpeed = 5;
 
+    public static int gameLoopCheck = 0;
 
-    public Powerup(double x, double y){
+    // instantiates the powerup brick
+    public Powerup(double x, double y, int WIDTH, int HEIGHT) {
         super(x, y, WIDTH, HEIGHT);
     }
 
-    public void powerUpRun(){
+    public void powerUpRun() {
+        if (Breakout.type == 1) {
+            // Turns the powerup on and changes the speed of the ball
             starPower = true;
-            pause(10000);
-            starPower = false;
+            gameLoopSpeed = 2;
+            gameLoopCheck = 10000;
+        }
     }
-
 
 }

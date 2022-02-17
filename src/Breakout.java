@@ -8,27 +8,22 @@ import svu.csc213.Dialog;
 import acm.util.RandomGenerator;
 
 
+
 public class Breakout extends GraphicsProgram {
 
 
-    /*
-    4) How do I know how many points I have
-
-    7) Powerups in some bricks
-    8) Multiple levels
-    9) An animation for broken brick
-
-     */
     private Ball ball;
     private Paddle paddle;
     private int lives = 3;
     private int point;
-    private GLabel pointLabel;
+    GLabel pointLabel;
     private GLabel livesLabel;
-    private int[] hitLives = {5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
-    private int numBricksInRow;
+    private final int[] hitLives = {5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
+    public static int type;
 
-    private Color[] rowColors = {Color.cyan, Color.cyan, Color.BLUE, Color.BLUE, Color.GREEN, Color.GREEN, Color.yellow, Color.yellow, Color.red, Color.red};
+    private final Color[] rowColors = {Color.cyan, Color.cyan, Color.BLUE, Color.BLUE, Color.GREEN, Color.GREEN, Color.yellow, Color.yellow, Color.red, Color.red};
+
+
 
     @Override
     public void init() {
@@ -44,7 +39,7 @@ public class Breakout extends GraphicsProgram {
         paddle = new Paddle(230, 430, 50, 10);
         add(paddle);
 
-        numBricksInRow = getWidth() / (Brick.WIDTH + 5);
+        int numBricksInRow = getWidth() / (Brick.WIDTH + 5);
 
         for (int row = 0; row < 10; row++) {
             for (int col = 0; col < numBricksInRow; col++) {
@@ -57,7 +52,7 @@ public class Breakout extends GraphicsProgram {
         }
 
     }
-        // this is a change
+
     @Override
     public void run() {
         addMouseListeners();
@@ -83,15 +78,22 @@ public class Breakout extends GraphicsProgram {
             if(ball.lost){
                 handleLoss();
             }
-
             if(point == 450){
-                Dialog.showMessage("You win");
-                run();
+                Dialog.showMessage("you won");
+                reset();
             }
-
             handleCollisions();
 
-            pause(5);
+            pause(Powerup.gameLoopSpeed);
+
+            // making sure the powerup doesn't last forever
+            if(Powerup.gameLoopCheck > 0){
+                Powerup.gameLoopCheck -= Powerup.gameLoopSpeed;
+                if(Powerup.gameLoopCheck <= 0){
+                    Powerup.starPower = false;
+                    Powerup.gameLoopSpeed = 5;
+                }
+            }
         }
     }
 
@@ -139,46 +141,64 @@ public class Breakout extends GraphicsProgram {
             }
         }
         // react accordingly
-        if (obj instanceof Brick) {
+        if (obj instanceof Brick){
             ((Brick) obj).loseLife();
             point += 1;
+
             pointLabel.setLabel("Points:" + (point));
 
-            switch (((Brick) obj).getLives()) {
-                case 1:
-                    obj.setColor(rowColors[9]);
+            switch (((Brick) obj).getLives()){
+                case 1: obj.setColor(rowColors[9]);
                     break;
-                case 2:
-                    obj.setColor(rowColors[7]);
+                case 2: obj.setColor(rowColors[7]);
                     break;
-                case 3:
-                    obj.setColor(rowColors[5]);
+                case 3: obj.setColor(rowColors[5]);
                     break;
-                case 4:
-                    obj.setColor(rowColors[3]);
+                case 4: obj.setColor(rowColors[3]);
                     break;
-                case 5:
-                    obj.setColor(rowColors[1]);
+                case 5: obj.setColor(rowColors[1]);
                     break;
             }
             ball.bounce();
 
-            if (((Brick) obj).getLives() == 0) {
+            if (((Brick) obj).getLives() == 0){
+                type = RandomGenerator.getInstance().nextInt(1, 1);
+                int value = RandomGenerator.getInstance().nextInt(1, 20);
+                if(value == 20){
+                    if(type == 1){
+
+                        //instantiates the star power powerup after the brick hiding it is broken
+                        Powerup powerup = new Powerup(((Brick) obj).getX(), (((Brick) obj)).getY(), 44, 20);
+                        add(powerup);
+                        powerup.setFillColor(Color.black);
+                        powerup.sendToFront();
+
+                    } else if (type == 2){
+                        // not finised
+                        Powerup powerup = new Powerup(((Brick) obj).getX(), (((Brick) obj)).getY(), 44, 200);
+                        add(powerup);
+                    }
+
+                }
                 remove(obj);
             }
-
-            // if we make it to the end and obj is still null, that means we hit nothing
-
+        }
+        // if we make it to the end and obj is still ull, that means we hit nothing
+        if(obj instanceof Powerup){
+            ball.bounce();
+            ((Powerup) obj).powerUpRun();
+            remove(obj);
         }
     }
 
     private void reset() {
         lives -= 1;
-        livesLabel.setLabel("Lives:" + " " + String.valueOf(lives));
+        livesLabel.setLabel("Lives: " + String.valueOf(lives));
         if(lives == 0){
             Dialog.showMessage("You lost loser");
             removeAll();
             lives = 3;
+            point = 0;
             init();
             return;
         }
